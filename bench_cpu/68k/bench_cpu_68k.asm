@@ -1,4 +1,7 @@
-	; X seconds
+;<----------------------------->
+; CPU Benchmark for 68000
+;           by OrionSoft [2026]
+;<----------------------------->
 
 BENCHMARK_ITERATIONS	equ	702	; 16bits test CRC8 should be 0xB1
 BENCHMARK_CRC8_RESULT	equ	$B1

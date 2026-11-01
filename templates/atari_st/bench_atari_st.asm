@@ -61,7 +61,8 @@ Bench:
 
 	move.w	#$FF,d7		; CRC8 init
 
-	include	"../../bench_cpu/68k/bench_cpu_68k.asm"
+;	include	"../../bench_cpu/68k/bench_cpu_68k.asm"
+	include	"../../bench_ram/68k/bench_ram_68k.asm"
 
 	ifne	BENCHMARK_IS_GRAPHIC
 

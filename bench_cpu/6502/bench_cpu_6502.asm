@@ -1,3 +1,8 @@
+;<----------------------------->
+; CPU Benchmark for 6502
+;           by OrionSoft [2026]
+;<----------------------------->
+
 BENCHMARK_ITERATIONS	=	702
 BENCHMARK_CRC8_RESULT	=	$B1
 
