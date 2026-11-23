@@ -6,15 +6,17 @@
 BENCHMARK_ITERATIONS	equ	702	; 16bits test CRC8 should be 0xB1
 BENCHMARK_CRC8_RESULT	equ	$B1
 
+	subq.l	#2,a7
+
 	moveq	#1,d0	; m
 .mainloop:
 	move.w	d0,d1	; n = m;
 .next:	cmpi.w	#1,d1	; while (n != 1)
 	beq.s	.done
 
-	move.w	d1,d2
+	move.w	d1,(a7)
 	eor.b	d1,d7	; crc8 ^= n & 0xFF;
-	lsr.w	#8,d2
+	move.b	(a7),d2
 	moveq	#8-1,d3	; bit counter
 .blop1:	add.b	d7,d7	; crc << 1
 	bcc.s	.noC1
@@ -40,4 +42,6 @@ BENCHMARK_CRC8_RESULT	equ	$B1
 .done:	addq.w	#1,d0	; for (m = 1; m <= ITERATIONS; m++)
 	cmpi.w	#BENCHMARK_ITERATIONS,d0
 	ble.s	.mainloop
+
+	addq.l	#2,a7
 
