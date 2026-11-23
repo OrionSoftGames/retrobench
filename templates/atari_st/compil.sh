@@ -1,2 +1,1 @@
-vasmm68k -devpac -Ftos -o benchram.prg bench_atari_st.asm
-
+rmac -p -m68000 bench_atari_st.asm -o benchcpu.prg

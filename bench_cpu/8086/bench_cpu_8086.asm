@@ -28,15 +28,13 @@ BENCHMARK_CRC8_RESULT	equ	0xB1
 .noC2:	dec	dl	; bit--
 	jne	.blop2
 
-	test	bl,1	; if ((n & 1) == 0)	// n%2
-	jne	.odd
-	shr	bx,1	;   n = n >> 1;		// n/2
-	jmp	.next
-.odd:			; else
-	mov	dx,bx	;   n = n + n + n + 1;	// 3*n+1
+	shr	bx,1	; n >> 1, C = bit 0
+	jnc	.next
+	mov	dx,bx	; 3*n+1
 	add	bx,bx
-	inc	dx
 	add	bx,dx
+	add	bx,2
+	add	bx,bx
 	jmp	.next
 
 .done:	inc	ax	; for (m = 1; m <= ITERATIONS; m++)

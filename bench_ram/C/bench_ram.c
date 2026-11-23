@@ -1,13 +1,13 @@
 // C Reference code for pure RAM benchmark:
-// Generate a table of 15000 8bits random numbers from a predictive algorithm.
-// Use an insert sort algorithm on this table of random numbers (which is pretty RAM intensive)
+// Generate a table of 7000 8bits random numbers from a predictive algorithm.
+// Use a shell sort algorithm on this table of random numbers (which is pretty RAM intensive)
 // Do a CRC8 computation to verify the data output from the sorted table, the CRC8 is performed using a 256 bytes CRC8 Lookup table to test RAM access again.
 
 #include <stdio.h>
 #include <stdint.h>
 
 // Number of iteration for the 16bits test
-#define	ITERATIONS	15000	// CRC8 should be 0x6A
+#define	ITERATIONS	7000	// CRC8 should be 0x47
 
 // Number of iteration for the 32bits test
 //#define	ITERATIONS			// CRC8 should be 0xXX
@@ -35,6 +35,26 @@ void	Generate_CRC8_Table(void)
 
 uint8_t	RandomTable[ITERATIONS];
 
+void	ShellSort(uint8_t *arr, uint16_t n)
+{
+    for (int gap = n / 2; gap > 0; gap /= 2)
+	{
+        for (int i = gap; i < n; i++)
+        {
+            uint8_t temp = arr[i];
+            int j = i;
+
+            while (j >= gap && arr[j - gap] > temp)
+			{
+                arr[j] = arr[j - gap];
+                j -= gap;
+            }
+
+            arr[j] = temp;
+        }
+    }
+}
+
 int	main(void)
 {
 	int16_t		i;
@@ -57,19 +77,7 @@ int	main(void)
 		RandomTable[i+1] = randseed & 0xFF;
 	}
 
-	// Insert sort
-	for (i = 1; i < ITERATIONS; i++)
-	{
-		uint8_t	key = RandomTable[i];
-		int16_t	j = i - 1;
-
-		while ((j >= 0) && (RandomTable[j] > key))
-		{
-			RandomTable[j+1] = RandomTable[j];
-			j--;
-		}
-		RandomTable[j+1] = key;
-	}
+	ShellSort(RandomTable, ITERATIONS);
 
 	// CRC8 Verification
 	for (i = 0; i < ITERATIONS; i++)

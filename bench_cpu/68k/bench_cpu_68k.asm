@@ -28,15 +28,13 @@ BENCHMARK_CRC8_RESULT	equ	$B1
 	eor.b	#$9B,d7	; CDMA2000
 .noC2:	dbra	d3,.blop2
 
-	btst	#0,d1	; if ((n & 1) == 0)	// n%2
-	bne.s	.odd
-	lsr.w	#1,d1	;   n = n >> 1;		// n/2
-	bra.s	.next
-.odd:			; else
-	move.w	d1,d2	;   n = n + n + n + 1;	// 3*n+1
+	lsr.w	#1,d1	; n >> 1, C = bit 0
+	bcc.s	.next
+	move.w	d1,d2	; 3*n+1
 	add.w	d1,d1
-	addq.w	#1,d2
 	add.w	d2,d1
+	addq.w	#2,d1
+	add.w	d1,d1
 	bra.s	.next
 
 .done:	addq.w	#1,d0	; for (m = 1; m <= ITERATIONS; m++)

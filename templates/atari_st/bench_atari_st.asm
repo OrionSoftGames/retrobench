@@ -3,7 +3,7 @@
 ;                    by OrionSoft [2026]
 ;<-------------------------------------->
 
-	section	text
+	.text
 
 BENCHMARK_IS_GRAPHIC	equ	0
 
@@ -12,7 +12,7 @@ BENCHMARK_IS_GRAPHIC	equ	0
 	trap	#1
 	addq.l	#6,a7
 
-	ifne	BENCHMARK_IS_GRAPHIC
+	if	BENCHMARK_IS_GRAPHIC
 	pea.l	txt_benchmode
 	else
 	pea.l	txt_presskey
@@ -32,11 +32,35 @@ BENCHMARK_IS_GRAPHIC	equ	0
 	move.w	#$20,-(a7)
 	trap	#1
 	addq.l	#6,a7
-	move.l	d0,old_stack
 
-; TODO, keep TimerC custom routine for time count
+	if	!BENCHMARK_IS_GRAPHIC
 
-	ifne	BENCHMARK_IS_GRAPHIC
+	move.w	sr,d1		; Save interrupts
+	move.w	d1,-(a7)
+	move.w	#$2700,sr	; Disable interrupts
+
+	lea	VectorSave,a0	; Save Int Vectors
+	lea	$70.w,a1	; VBL
+	lea	$114.w,a2	; TimerC
+	lea	$FFFFFA17.w,a3
+	move.l	(a1),(a0)+	; VBL
+	move.l	(a2),(a0)+	; TimerC
+	move.l	d0,(a0)+	; Old Stack
+	move.b	(a3),(a0)
+
+	move.b	#$13,$fffffc02.w	; Disable IKBD
+	bclr	#3,(a3)		; Automatic End-interrupt mode
+
+	clr.w	TimeRef		; Zero Timer Count
+	move.l	#VBLRout,(a1)	; Clear VBL routine
+	move.l	#TimeRout,(a2)	; Our own Fast TimerC
+
+	move.w	(a7),d0		; Restore interrupts
+	move.w	d0,sr
+
+	else
+
+	move.l	d0,-(a7)	; Old Stack
 
 	move.w	#2,-(a7)	; PhysBase();
 	trap	#14
@@ -55,31 +79,52 @@ BENCHMARK_IS_GRAPHIC	equ	0
 ;------------------------------->
 
 Bench:
-	move.w	sr,d0
-	move.w	d0,-(a7)	; Save interrupts
-	move.w	#$2700,sr	; Disable interrupts
-
 	move.w	#$FF,d7		; CRC8 init
 
-;	include	"../../bench_cpu/68k/bench_cpu_68k.asm"
-	include	"../../bench_ram/68k/bench_ram_68k.asm"
+	include	"../../bench_cpu/68k/bench_cpu_68k.asm"
+;	include	"../../bench_ram/68k/bench_ram_68k.asm"
 
-	ifne	BENCHMARK_IS_GRAPHIC
+	if	!BENCHMARK_IS_GRAPHIC
 
-;	cmp.b	#$39,$FFFFFC02.w	; TODO: Space key to exit in graphic mode
+	move.w	#$2700,sr	; Disable interrupts
 
-	else
+	lea	VectorSave,a0	; Restore Int Vectors
+	move.l	(a0)+,$70.w	; VBL
+	move.l	(a0)+,$114.w	; TimerC
+	move.l	(a0)+,d1	; Old Stack
+	move.b	(a0),$FFFFFA17.w
 
-	endif
+	move.b	#$11,$fffffc02.w	; Restore IKBD
 
 	move.w	(a7)+,d0	; Restore interrupts
 	move.w	d0,sr
+	move.l	d1,-(a7)	; Old Stack
 
-	move.l	old_stack,-(a7)	; User Mode
-	move.w	#$20,-(a7)
+	else
+
+;	cmp.b	#$39,$FFFFFC02.w	; TODO: Space key to exit in graphic mode
+
+	endif
+
+	move.w	#$20,-(a7)	; User Mode
 	trap	#1
 	addq.l	#6,a7
 
+	; Convert time to string for display
+	lea	txt_timeEnd,a0
+	move.w	TimeRef,d0
+	mulu.w	#5,d0		; Timer C is 200Hz, we multiply by 5 to get milliseconds
+TimeToStr:
+	divu.w	#10,d0
+	swap	d0
+	addi.b	#'0',d0
+	move.b	d0,-(a0)
+	clr.w	d0
+	swap	d0
+	tst.w	d0
+	bne.s	TimeToStr
+
+	; Verify Checksum and display confirmation text
 	lea	txt_good,a0
 	cmpi.b	#BENCHMARK_CRC8_RESULT,d7
 	beq.s	crc_is_ok
@@ -88,14 +133,26 @@ crc_is_ok:
 	move.l	a0,-(a7)
 	move.w	#9,-(a7)	; Cconws()
 	trap	#1
+	pea.l	txt_time
+	move.w	#9,-(a7)	; Cconws()
+	trap	#1
 	move.w	#7,-(a7)	; Crawcin()
 	trap	#1
-	addq.l	#8,a7
+	lea	14(a7),a7
 
 	clr.l	-(a7)		; Exit
 	trap	#1
 
-	ifne	BENCHMARK_IS_GRAPHIC
+;------------------------------->
+
+	if	!BENCHMARK_IS_GRAPHIC
+
+TimeRout:
+	addq.w	#1,TimeRef
+VBLRout:
+	rte
+
+	else
 
 PutPixel:
 	movea.l	a0,a1		; d3=X, d4=Y, a1=screen
@@ -120,10 +177,10 @@ PutPixel:
 
 ;------------------------------->
 
-	section	data
+	.data
 
 txt_title:	dc.b	"Retro CPU Benchmark by OrionSoft 2026",10,13,0
-	ifne	BENCHMARK_IS_GRAPHIC
+	if	BENCHMARK_IS_GRAPHIC
 txt_benchmode:	dc.b	"Press B for bench or G for graphic mode",10,13,0
 	else
 txt_presskey:	dc.b	"Press Return to start...",10,13,0
@@ -131,11 +188,13 @@ txt_presskey:	dc.b	"Press Return to start...",10,13,0
 txt_start:	dc.b	"Benchmark result: ",0
 txt_good:	dc.b	"validated!",10,13,0
 txt_error:	dc.b	"error!",10,13,0
-txt_time:	dc.b	"Time: ",0
+txt_time:	dc.b	"Time:      "
+txt_timeEnd:	dc.b	"ms",10,13,0
 
 ;------------------------------->
 
-	section	bss
+	.bss
 
-old_stack:	ds.l	1
+VectorSave:	ds.l	4
+TimeRef:	ds.w	1
 
