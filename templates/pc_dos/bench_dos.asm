@@ -3,6 +3,8 @@
 ;           by OrionSoft [2026]
 ;<----------------------------->
 
+	cpu	8086
+	section	.text
 	org	100h
 
 ;%define	BENCHMARK_IS_GRAPHIC
@@ -45,17 +47,17 @@
 	push	dx
 
 Bench:
-	mov	cl,0xFF		; CRC8 init
+	mov	dl,0xFF		; CRC8 init
 
-	%include	"../../bench_cpu/8086/bench_cpu_8086.asm"
-;	%include	"../../bench_ram/8086/bench_ram_8086.asm"
+;	%include	"../../bench_cpu/8086/bench_cpu_8086.asm"
+	%include	"../../bench_ram/8086/bench_ram_8086.asm"
 
 	%ifdef	BENCHMARK_IS_GRAPHIC
 	; TODO: Esc key to exit in graphic mode
 	%endif
 
 	pop	bx		; Old Ticks
-	push	cx		; Save CRC8
+	push	dx		; Save CRC8
 
 	xor	ah,ah
 	int	0x1A		; Get Ticks
@@ -113,7 +115,9 @@ PutPixel:
 
 ;------------------------------->
 
-txt_title:	db	"Retro CPU Benchmark by OrionSoft 2026",10,13,'$'
+	section	.data
+
+txt_title:	db	"Retro RAM Benchmark by OrionSoft 2026",10,13,'$'
 	%ifdef	BENCHMARK_IS_GRAPHIC
 txt_benchmode:	db	"Press B for bench or G for graphic mode",10,13,'$'
 	%else

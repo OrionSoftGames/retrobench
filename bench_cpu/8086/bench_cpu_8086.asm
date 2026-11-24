@@ -3,7 +3,7 @@
 ;           by OrionSoft [2026]
 ;<----------------------------->
 
-BENCHMARK_ITERATIONS	equ	702	; 16bits test CRC8 should be 0xB1
+BENCHMARK_ITERATIONS	equ	702
 BENCHMARK_CRC8_RESULT	equ	0xB1
 
 	mov	ax,1	; m
@@ -12,27 +12,27 @@ BENCHMARK_CRC8_RESULT	equ	0xB1
 .next:	cmp	bx,1	; while (n != 1)
 	je	.done
 
-	xor	cl,bl	; crc8 ^= n & 0xFF;
-	mov	dl,8	; bit counter
-.blop1:	add	cl,cl	; crc << 1
+	xor	dl,bl	; crc8 ^= n & 0xFF;
+	mov	cl,8	; bit counter
+.blop1:	add	dl,dl	; crc << 1
 	jnc	.noC1
-	xor	cl,0x9B	; CDMA2000
-.noC1:	dec	dl	; bit--
+	xor	dl,0x9B	; CDMA2000
+.noC1:	dec	cl	; bit--
 	jne	.blop1
 
-	xor	cl,bh	; crc8 ^= n >> 8;
-	mov	dl,8	; bit counter
-.blop2:	add	cl,cl	; crc << 1
+	xor	dl,bh	; crc8 ^= n >> 8;
+	mov	cl,8	; bit counter
+.blop2:	add	dl,dl	; crc << 1
 	jnc	.noC2
-	xor	cl,0x9B	; CDMA2000
-.noC2:	dec	dl	; bit--
+	xor	dl,0x9B	; CDMA2000
+.noC2:	dec	cl	; bit--
 	jne	.blop2
 
 	shr	bx,1	; n >> 1, C = bit 0
 	jnc	.next
-	mov	dx,bx	; 3*n+1
+	mov	cx,bx	; 3*n+1
 	add	bx,bx
-	add	bx,dx
+	add	bx,cx
 	add	bx,2
 	add	bx,bx
 	jmp	.next

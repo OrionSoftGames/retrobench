@@ -105,6 +105,6 @@ For now the compilation process is not really automated (partly because of the l
 | Assembler used | CPU          | CRC8 is in variable or register: |
 | ---            | ---          | ---                              |
 | PCEAS          | 6502/HuC6280 | crc8 (in zero page, byte access) |
-| NASM           | 8086         | cl                               |
+| NASM           | 8086         | dl                               |
 | RMAC/RLN       | 68000        | d7.b                             |
 
